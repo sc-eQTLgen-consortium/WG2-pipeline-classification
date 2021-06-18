@@ -12,7 +12,7 @@ containing:
 - 224 protein markers (CITE-seq)
 - 31 cell types
 
-|                                                               	|                       	|
+| **Lymphoid populations**                                        | **Myeloid populations** |
 |---------------------------------------------------------------	|-----------------------	|
 | CD4 Naive, CD4 TCM, CD4 TEM, CD4 CTL, Treg, CD4 Proliferating 	| CD14 Mono, CD16 Mono  	|
 | CD8 Naive, CD8 TCM, CD8 TEM, CD8 Proliferating                	| cDC1, cDC2, pDC, ASDC 	|
@@ -30,7 +30,7 @@ Query RDS **Seurat object** containing:
 - **Gene expression matrix (counts)**. [Mandatory]
 - Batch information (e.g. pool / well).  [Optional]
 
-To improve alignment to reference, each batch can be integrated to the reference separately.
+To improve alignment to reference and cell annotation, we advise to integrate each batch to the reference separately.
 Cell type classification can be processed in parallel via the `future` package.
 
 
@@ -45,7 +45,7 @@ Query RDS **Seurat object** containing:
   
 All results are contained in a new Seurat object with
 
-- Two extra columns in the metadata slot (`celltype.l2` and `celltype.l2.scores`)
+- Two extra columns in the metadata slot (`predicted.celltype.l2` and `predicted.celltype.l2.scores`)
 - Two dimensional reduction objects corresponding to the query supervised PCA and 
 UMAP embeddings computed based on the sPCA. 
   
@@ -56,11 +56,7 @@ for exploratory evaluation.
 # Running cell-type classification method
 
 The `azimuth.sif` container has all components to perform cell-type classification.
-The singularity container can be downloaded from:
-
-```
-https://www.dropbox.com/s/x3ru1h02qn6oqoo/azimuth.sif?dl=0
-```
+The singularity container can be downloaded from this [dropbox](https://www.dropbox.com/s/x3ru1h02qn6oqoo/azimuth.sif?dl=0)
 
 The container can be run using the following parameters:
 
