@@ -56,7 +56,7 @@ for exploratory evaluation.
 # Running cell-type classification method
 
 The `azimuth.sif` container has all components to perform cell-type classification.
-The singularity container can be downloaded from this [dropbox](https://www.dropbox.com/s/x3ru1h02qn6oqoo/azimuth.sif?dl=0)
+The singularity container can be downloaded from this [dropbox location](https://www.dropbox.com/s/x3ru1h02qn6oqoo/azimuth.sif?dl=0)
 
 The container can be run using the following parameters:
 
