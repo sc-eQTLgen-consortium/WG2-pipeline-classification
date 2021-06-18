@@ -1,0 +1,46 @@
+Bootstrap:docker
+From: ubuntu:20.10
+
+%environment
+  export PATH=$PATH:/opt/miniconda3/bin
+  export LC_ALL=C
+
+%post
+  # Update
+  apt-get -y update
+
+  # Install gcc
+  apt-get -y install gcc
+
+  # Install wget
+  apt-get -y install wget
+
+  # Install conda
+  wget https://repo.anaconda.com/miniconda/Miniconda3-py39_4.9.2-Linux-x86_64.sh
+  bash Miniconda3-py39_4.9.2-Linux-x86_64.sh -b -p /opt/miniconda3
+  rm Miniconda3-py39_4.9.2-Linux-x86_64.sh
+  export PATH=$PATH:/opt/miniconda3/bin
+
+  # Install R
+  conda install -c conda-forge r-base=4.1.0
+
+  # Install HDF5
+  conda install -c anaconda hdf5
+
+  # Install R packages
+  R --slave -e 'install.packages("Seurat", repos = "http://cran.us.r-project.org")'
+  R --slave -e 'install.packages("ggplot2", repos = "http://cran.us.r-project.org")'
+  R --slave -e 'install.packages("remotes", repos = "http://cran.us.r-project.org")'
+  R --slave -e 'install.packages("optparse", repos = "http://cran.us.r-project.org")'
+  R --slave -e 'remotes::install_github("mojaveazure/seurat-disk")'
+
+%files
+  azimuth.R /
+  pbmc_multimodal.h5seurat /
+
+
+%runscript
+  Rscript /azimuth.R $@
+
+%labels 
+  Author Jose Alquicira Hernandez, Lieke Michelsen
