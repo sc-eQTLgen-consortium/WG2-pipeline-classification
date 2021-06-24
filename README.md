@@ -90,5 +90,5 @@ singularity run -B $PWD azimuth.sif             \
 # Authors
 
 - Jose Alquicira Hernandez (j.alquicira@garvan.org.au)
-- Lieke Michelsen (L.C.M.Michielsen@tudelft.nl)
+- Lieke Michielsen (L.C.M.Michielsen@tudelft.nl)
 
