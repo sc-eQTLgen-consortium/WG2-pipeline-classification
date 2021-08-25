@@ -14,6 +14,7 @@ suppressPackageStartupMessages(library("Seurat"))
 suppressPackageStartupMessages(library("SeuratDisk"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("future.apply"))
+suppressPackageStartupMessages(library("progressr"))
 suppressPackageStartupMessages(library("optparse"))
 
 #   ____________________________________________________________________________
@@ -39,8 +40,8 @@ option_list <-  list(
               type = "character", 
               default = "sequential", 
               help = crayon::yellow("Strategy to resolve future [default= %default]:
-                multicore
                 multisession
+                multicore
                 cluster
                 remote
                 transparent"), 
@@ -68,16 +69,6 @@ if (is.null(opt$file)){
   stop(crayon::red("Query file name is missing"), call. = FALSE)
 }
 
-
-#   ____________________________________________________________________________
-#   Define future                                                           ####
-
-
-options(future.globals.maxSize = opt$mem * 1024^3)
-if(opt$plan != "sequential"){
-  plan(opt$plan, workers = opt$workers)
-}
-
 #   ____________________________________________________________________________
 #   Helper functions                                                        ####
 
@@ -99,12 +90,48 @@ echo <- function(text, color = c("green", "red", "yellow", "blue")){
 }
 
 #   ____________________________________________________________________________
+#   Input information                                                       ####
+
+echo("Input information.......................................................", 
+     "yellow")
+
+echo(paste0(crayon::bold("Input file:\n"), opt$file), "yellow")
+echo(paste0(crayon::bold("Output directory for results:\n"), opt$out), "yellow")
+echo(paste0(crayon::bold("Batch variable:\n"), opt$batch), "yellow")
+echo(paste0(crayon::bold("Parallelization plan:\n"), opt$plan), "yellow")
+echo(paste0(crayon::bold("Number of workers: \n"), opt$workers), "yellow")
+echo(paste0(crayon::bold("maxSize future global: \n"), opt$mem), "yellow")
+
+
+echo("DONE....................................................................", 
+     "yellow")
+
+#   ____________________________________________________________________________
+#   Define future                                                           ####
+
+echo("Future settings.........................................................", 
+     "blue")
+
+options(future.globals.maxSize = opt$mem * 1024^3)
+handlers(global = TRUE)
+handlers("progress")
+
+
+if(opt$plan != "sequential"){
+  plan(opt$plan, workers = opt$workers)
+}
+
+echo("DONE....................................................................", 
+     "blue")
+
+#   ____________________________________________________________________________
 #   Import query data                                                       ####
 
 echo("Loading query data......................................................", 
      "blue")
 
 data <- readRDS(opt$file)
+if(!inherits(data, "Seurat")) stop("Input query data is not a Seurat object")
 data <- UpdateSeuratObject(data)
 
 echo("DONE....................................................................", 
@@ -144,7 +171,78 @@ if (is.null(opt$batch)){
 echo("Applying SCTransform to each batch......................................", 
      "green")
 
-batches <- future_lapply(batches, SCTransform)
+apply_sctransform <- function(xs){
+  p <- progressor(along = xs)
+  future_lapply(xs, function(x){
+    x <- SCTransform(x, verbose = FALSE)
+    p()
+    x
+  })
+}
+
+batches <- apply_sctransform(batches)
+
+echo("DONE....................................................................",
+     "green")
+
+###
+
+echo("Applying SCTransform to each batch......................................", 
+     "green")
+
+apply_sctransform <- function(xs){
+  p <- progressor(along = xs)
+  future_lapply(xs, function(x, i, n){
+    x <- SCTransform(x, verbose = FALSE)
+    p(message = sprintf("| Batch %g", x))
+    x
+  }, length(xs))
+}
+
+batches <- apply_sctransform(batches)
+
+echo("DONE....................................................................",
+     "green")
+
+
+###
+
+echo("Applying SCTransform to each batch......................................", 
+     "green")
+
+apply_sctransform <- function(xs){
+  p <- progressor(along = xs)
+  future_imap(xs, function(x, i, n){
+    x <- SCTransform(x, verbose = FALSE)
+    p(message = sprintf("| Batch %d/%d", i, n))
+    x
+  }, length(xs))
+}
+
+batches <- apply_sctransform(batches)
+
+echo("DONE....................................................................",
+     "green")
+
+####
+
+echo("Applying SCTransform to each batch......................................", 
+     "green")
+
+handlers(global = TRUE)
+handlers("progress")
+batches <- readRDS("batches.RDS")
+
+apply_sctransform <- function(xs){
+  p <- progressor(along = xs)
+   mapply(function(x, i, n){
+    x <- SCTransform(x, verbose = FALSE)
+    p(message = sprintf("| Batch %d/%d", i, n))
+    x
+  }, xs, seq_along(xs), MoreArgs = list(n = length(xs)), SIMPLIFY = FALSE)
+}
+
+batches <- apply_sctransform(batches)
 
 echo("DONE....................................................................",
      "green")
@@ -155,13 +253,24 @@ echo("DONE....................................................................",
 echo("Finding anchors for each batch..........................................",
      "green")
 
-anchors <- future_lapply(batches, function(x)
-  FindTransferAnchors(reference = reference,
-                      query = x,
-                      normalization.method = "SCT",
-                      reference.reduction = "spca",
-                      dims = 1:50), 
-  future.seed = TRUE)
+find_anchors <- function(xs){
+  p <- progressor(along = xs)
+  
+  future_lapply(xs, function(x){
+    
+    x <- FindTransferAnchors(reference = reference,
+                             query = x,
+                             normalization.method = "SCT",
+                             reference.reduction = "spca",
+                             dims = 1:50) 
+    p()
+    x
+    
+  }, future.seed = TRUE)
+  
+}
+
+anchors <- find_anchors(batches)
 
 echo("DONE....................................................................", 
      "green")
@@ -169,27 +278,33 @@ echo("DONE....................................................................",
 #   ____________________________________________________________________________
 #   Map cells                                                               ####
 
-echo("Finding anchors for each batch..........................................", 
+echo("Mapping query cells for each batch......................................", 
      "green")
 
-batches <- future_mapply(function(anchor, x){
-  x <- MapQuery(
-    anchorset = anchor,
-    query = x,
-    reference = reference,
-    refdata = list(
-      celltype.l1 = "celltype.l1",
-      celltype.l2 = "celltype.l2",
-      predicted_ADT = "ADT"
-    ),
-    reference.reduction = "spca", 
-    reduction.model = "wnn.umap")
+map_cells <- function(anchors, batches){
+  p <- progressor(along = anchors)
   
-}, anchors, batches, SIMPLIFY = FALSE, future.seed = TRUE)
+  future_mapply(function(anchor, x){
+    x <- MapQuery(
+      anchorset = anchor,
+      query = x,
+      reference = reference,
+      refdata = list(
+        celltype.l1 = "celltype.l1",
+        celltype.l2 = "celltype.l2",
+        predicted_ADT = "ADT"
+      ),
+      reference.reduction = "spca", 
+      reduction.model = "wnn.umap")
+    
+  }, anchors, batches, SIMPLIFY = FALSE, future.seed = TRUE)
+  
+}
+
+batches <- map_cells(anchors, batches)
 
 echo("DONE....................................................................", 
      "green")
-
 
 #   ____________________________________________________________________________
 #   Gather cell type classification and store in main object                ####
@@ -198,12 +313,12 @@ echo("Gathering results........................................................"
      "green")
 
 celltype_l2 <- lapply(batches, 
-                      \(x) x[[]][, 
-                                 c("predicted.celltype.l2", 
-                                   "predicted.celltype.l2.score"), drop = FALSE
+                      function(x) x[[]][, 
+                                        c("predicted.celltype.l2", 
+                                          "predicted.celltype.l2.score"), drop = FALSE
                       ])
 
-celltype_l2 <- lapply(celltype_l2, \(x){
+celltype_l2 <- lapply(celltype_l2, function(x){
   x$barcode <- row.names(x)
   x
 })
@@ -219,11 +334,11 @@ echo("DONE....................................................................",
 #   ____________________________________________________________________________
 #   Gather dimensionality reductions and store in main object               ####
 
-echo("Storing reference-based dimensionality reductions in query object........",
+echo("Storing reference-based dimensionality reductions in query object.......",
      "green")
 
-spca <- lapply(batches, \(x) x[["ref.spca"]])
-umap <- lapply(batches, \(x) x[["ref.umap"]])
+spca <- lapply(batches, function(x) x[["ref.spca"]])
+umap <- lapply(batches, function(x) x[["ref.umap"]])
 
 spca <- merge(merge(spca[[1]], spca[-1]))
 umap <- merge(merge(umap[[1]], umap[-1]))
@@ -237,12 +352,32 @@ data[["azimuth_umap"]] <- umap
 echo("DONE....................................................................", 
      "green")
 
+
+#   ____________________________________________________________________________
+#   Gather imputed ADT                                                      ####
+
+echo("Storing imputed ADT assay in query object...............................",
+     "green")
+
+predicted_ADT <- lapply(batches, function(x) x[["predicted_ADT"]])
+
+if(length(predicted_ADT) == 1){
+  predicted_ADT <- predicted_ADT[[1]]
+}else{
+  predicted_ADT <- merge(predicted_ADT[[1]], predicted_ADT[-1])
+}
+
+data[["predicted_ADT"]] <- predicted_ADT
+
+echo("DONE....................................................................", 
+     "green")
+
 #   ____________________________________________________________________________
 #   Plot reductions                                                         ####
 
 dir.create(opt$out)
 
-echo("Plotting data............................................................",
+echo("Plotting data...........................................................",
      "green")
 
 p_umap <- DimPlot(data, 
@@ -270,7 +405,7 @@ echo("DONE....................................................................",
 #   ____________________________________________________________________________
 #   Export data                                                             ####
 
-echo("Saving query data........................................................",
+echo("Saving query data.......................................................",
      "yellow")
 
 saveRDS(data, file.path(opt$out, "query.RDS"))
