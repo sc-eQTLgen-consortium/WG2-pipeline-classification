@@ -173,69 +173,7 @@ echo("Applying SCTransform to each batch......................................",
 
 apply_sctransform <- function(xs){
   p <- progressor(along = xs)
-  future_lapply(xs, function(x){
-    x <- SCTransform(x, verbose = FALSE)
-    p()
-    x
-  })
-}
-
-batches <- apply_sctransform(batches)
-
-echo("DONE....................................................................",
-     "green")
-
-###
-
-echo("Applying SCTransform to each batch......................................", 
-     "green")
-
-apply_sctransform <- function(xs){
-  p <- progressor(along = xs)
-  future_lapply(xs, function(x, i, n){
-    x <- SCTransform(x, verbose = FALSE)
-    p(message = sprintf("| Batch %g", x))
-    x
-  }, length(xs))
-}
-
-batches <- apply_sctransform(batches)
-
-echo("DONE....................................................................",
-     "green")
-
-
-###
-
-echo("Applying SCTransform to each batch......................................", 
-     "green")
-
-apply_sctransform <- function(xs){
-  p <- progressor(along = xs)
-  future_imap(xs, function(x, i, n){
-    x <- SCTransform(x, verbose = FALSE)
-    p(message = sprintf("| Batch %d/%d", i, n))
-    x
-  }, length(xs))
-}
-
-batches <- apply_sctransform(batches)
-
-echo("DONE....................................................................",
-     "green")
-
-####
-
-echo("Applying SCTransform to each batch......................................", 
-     "green")
-
-handlers(global = TRUE)
-handlers("progress")
-batches <- readRDS("batches.RDS")
-
-apply_sctransform <- function(xs){
-  p <- progressor(along = xs)
-   mapply(function(x, i, n){
+  mapply(function(x, i, n){
     x <- SCTransform(x, verbose = FALSE)
     p(message = sprintf("| Batch %d/%d", i, n))
     x
