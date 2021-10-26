@@ -1,5 +1,5 @@
 Bootstrap:docker
-From: satijalab/seurat:4.0.3
+From: satijalab/seurat:4.0.5
 
 %environment
   export LC_ALL=C
