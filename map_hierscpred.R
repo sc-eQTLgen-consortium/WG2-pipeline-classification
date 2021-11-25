@@ -130,12 +130,12 @@ echo("DONE....................................................................",
 echo("Future settings.........................................................", 
      "blue")
 
-options(future.globals.maxSize = opt$mem * 1024^3)
 handlers(global = TRUE)
 handlers("progress")
 
 
 if(opt$plan != "sequential"){
+  options(future.globals.maxSize = opt$mem * 1024^3)
   plan(opt$plan, workers = opt$workers)
 }
 

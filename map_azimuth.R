@@ -13,7 +13,6 @@
 suppressPackageStartupMessages(library("Seurat"))
 suppressPackageStartupMessages(library("SeuratDisk"))
 suppressPackageStartupMessages(library("ggplot2"))
-suppressPackageStartupMessages(library("future.apply"))
 suppressPackageStartupMessages(library("progressr"))
 suppressPackageStartupMessages(library("optparse"))
 
@@ -118,12 +117,12 @@ echo("DONE....................................................................",
 echo("Future settings.........................................................", 
      "blue")
 
-options(future.globals.maxSize = opt$mem * 1024^3)
 handlers(global = TRUE)
 handlers("progress")
 
 
 if(opt$plan != "sequential"){
+  options(future.globals.maxSize = opt$mem * 1024^3)
   plan(opt$plan, workers = opt$workers)
 }
 
@@ -179,11 +178,11 @@ echo("Applying SCTransform to each batch......................................",
 
 apply_sctransform <- function(xs){
   p <- progressor(along = xs)
-  future_mapply(function(x, i, n){
+  mapply(function(x, i, n){
     x <- SCTransform(x, verbose = FALSE)
     p(message = sprintf("| Batch %d/%d", i, n))
     x
-  }, xs, seq_along(xs), MoreArgs = list(n = length(xs)), SIMPLIFY = FALSE, future.seed = TRUE)
+  }, xs, seq_along(xs), MoreArgs = list(n = length(xs)), SIMPLIFY = FALSE)
 }
 
 batches <- apply_sctransform(batches)
@@ -200,7 +199,7 @@ echo("Finding anchors for each batch..........................................",
 find_anchors <- function(xs){
   p <- progressor(along = xs)
   
-  future_lapply(xs, function(x){
+  lapply(xs, function(x){
     
     x <- FindTransferAnchors(reference = reference,
                              query = x,
@@ -210,7 +209,7 @@ find_anchors <- function(xs){
     p()
     x
     
-  }, future.seed = TRUE)
+  })
   
 }
 
@@ -228,7 +227,7 @@ echo("Mapping query cells for each batch......................................",
 map_cells <- function(anchors, batches){
   p <- progressor(along = anchors)
   
-  future_mapply(function(anchor, x){
+  mapply(function(anchor, x){
     x <- MapQuery(
       anchorset = anchor,
       query = x,
@@ -240,7 +239,7 @@ map_cells <- function(anchors, batches){
       reference.reduction = "spca", 
       reduction.model = "wnn.umap")
     
-  }, anchors, batches, SIMPLIFY = FALSE, future.seed = TRUE)
+  }, anchors, batches, SIMPLIFY = FALSE)
   
 }
 

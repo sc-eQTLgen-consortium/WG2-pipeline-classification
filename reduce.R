@@ -61,10 +61,6 @@ echo <- function(text, color = c("green", "red", "yellow", "blue")){
     cat(crayon::blue(text))
   
 }
-#   ____________________________________________________________________________
-#   Create output directory                                                 ####
-
-dir.create(opt$out)
 
 #   ____________________________________________________________________________
 #   Input information                                                       ####
