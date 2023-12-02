@@ -10,11 +10,12 @@
 #   ____________________________________________________________________________
 #   Import libraries                                                        ####
 
-suppressPackageStartupMessages(library("Seurat"))
-suppressPackageStartupMessages(library("SeuratDisk"))
-suppressPackageStartupMessages(library("ggplot2"))
-suppressPackageStartupMessages(library("progressr"))
-suppressPackageStartupMessages(library("optparse"))
+.libPaths("/usr/local/lib/R/site-library")
+suppressMessages(suppressWarnings(library(Seurat)))
+suppressMessages(suppressWarnings(library(SeuratDisk)))
+suppressMessages(suppressWarnings(library(ggplot2)))
+suppressMessages(suppressWarnings(library(progressr)))
+suppressMessages(suppressWarnings(library(optparse)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
@@ -29,6 +30,11 @@ option_list <-  list(
               type = "character", 
               default = NULL, 
               help = crayon::yellow("Batch column. If provided, each group in from the batch columns is mapped to reference independently"), 
+              metavar = "character"),
+    make_option("--reference",
+              type = "character",
+              default = NULL,
+              help = crayon::green(""),
               metavar = "character"),
   make_option("--plan", 
               type = "character", 
@@ -59,7 +65,7 @@ option_list <-  list(
               metavar = "character"),
   make_option("--path", 
               type = "character", 
-              default = ".", 
+              default = ".",
               help = crayon::green("Output path to store results [default= %default]"), 
               metavar = "character")
 )
@@ -67,6 +73,12 @@ option_list <-  list(
 
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
+
+print("Options in effect:")
+for (name in names(opt)) {
+	print(paste0("  --", name, " ", opt[[name]]))
+}
+print("")
 
 if (is.null(opt$file)){
   print_help(opt_parser)
@@ -149,7 +161,7 @@ echo("DONE....................................................................",
 echo("Loading CITE-seq reference..............................................", 
      "yellow")
 
-reference <- LoadH5Seurat("/pbmc_multimodal.h5seurat")
+reference <- LoadH5Seurat(opt$reference)
 
 echo("DONE....................................................................", 
      "yellow")

@@ -1,0 +1,69 @@
+---
+####################################################################################
+##### The following arguments are for indicating file locations on your system #####
+####################################################################################
+inputs:
+  singularity_image: /path/to/singularity/image.sif ### The complete path to the singularity image that has all the softwares
+  bind_path: /path/to/bind/to/mount ### List of paths to bind to Singularity. You can specify multiple directories by adding a "," between them. Eg. ${DIRECTORY1},${DIRECTORY2}
+  query_rds: /path/to/query_rds ### RDS file you wish to classify
+  batch_info: /path/to/batches/file.tsv ### Batch file. If provided, each group in from the batch columns is mapped to reference independently
+
+refs:
+  ref_dir: /path/to/transcriptome/dir ### This is the path to the directory containing the reference files
+
+outputs: 
+  output_dir: /path/to/parent/out/dir ### The path to the parent dir where you would like all outputs/results saved. This path must exist before running.
+
+settings:
+  azimuth: True
+  hierscpred: True
+
+cluster_time: {0: "05:59:00", 1: "23:59:00", 2: "6-23:59:00"}
+
+##############################################################################################################
+##### The following arguments are common parameters that may need to be changed depending on the dataset #####
+##############################################################################################################
+split:
+  split_memory: 16 ### The amount of memory (GB) used per thread for the split step
+  split_threads: 1 ### The number threads that will be used for the split step
+  split_time: 0 ### The time setting to use
+
+map:
+  azimuth_memory: 32 ### The amount of memory (GB) used per thread for the azimuth step
+  azimuth_threads: 1 ### The number threads that will be used for the azimuth step
+  azimuth_time: 0 ### The time setting to use
+
+  hierscpred_memory: 32 ### The amount of memory (GB) used per thread for the hier. scpred step
+  hierscpred_threads: 1 ### The number threads that will be used for the hier. scpred step
+  hierscpred_time: 0 ### The time setting to use
+
+reduce:
+  reduce_memory: 16 ### The amount of memory (GB) used per thread for the reduce step
+  reduce_threads: 1 ### The number threads that will be used for the reduce step
+  reduce_time: 0 ### The time setting to use
+
+compare:
+  compare_memory: 16 ### The amount of memory (GB) used per thread for the compare step
+  compare_threads: 1 ### The number threads that will be used for the compare step
+  compare_time: 0 ### The time setting to use
+
+############################################################################################################################################
+##### The following arguments in this section should not need to be changed/edited unless the default options do not work your dataset #####
+############################################################################################################################################
+refs_extra:
+  azimuth: "pbmc_multimodal.h5seurat" ### used for azimuth classification
+  hierscpred: "hier_scpred.RDS" ### hierarchical trained model for scPred classification
+
+map_extra:
+  azimuth_plan: "sequential" ### Strategy to resolve future: sequential, multisession, multicore, cluster, remote, transparent
+  hierscpred_thr: 0 ### Threshold for rejection. By default no rejection is implemented
+  hierscpred_iter: 10 ### Maximum number or Harmony iterations
+  hierscpred_plan: "sequential" ### Strategy to resolve future: sequential, multisession, multicore, cluster, remote, transparent
+
+compare_extra:
+  xaxis: "predicted.celltype.l2" ### Column in metadata
+  yaxis: "scpred_prediction" ### Column in metadata
+  sort: true ### Sort labels in both axes to match cell type hierarchy?
+
+settings_extra:
+  memory_buffer: 1 ### Buffer to prevent memory overflow, available memory is reduced by this amount in GB

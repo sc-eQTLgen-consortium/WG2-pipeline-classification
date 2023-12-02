@@ -10,9 +10,10 @@
 #   ____________________________________________________________________________
 #   Import libraries                                                        ####
 
-suppressPackageStartupMessages(library("Seurat"))
-suppressPackageStartupMessages(library("progressr"))
-suppressPackageStartupMessages(library("optparse"))
+.libPaths("/usr/local/lib/R/site-library")
+suppressMessages(suppressWarnings(library(Seurat)))
+suppressMessages(suppressWarnings(library(progressr)))
+suppressMessages(suppressWarnings(library(optparse)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
@@ -35,7 +36,7 @@ option_list <-  list(
               metavar = "character"),
   make_option("--path", 
               type = "character", 
-              default = ".", 
+              default = ".",
               help = crayon::green("Output path to store results [default= %default]"), 
               metavar = "character")
 )
@@ -43,6 +44,12 @@ option_list <-  list(
 
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
+
+print("Options in effect:")
+for (name in names(opt)) {
+	print(paste0("  --", name, " ", opt[[name]]))
+}
+print("")
 
 if (is.null(opt$file)){
   print_help(opt_parser)
@@ -113,7 +120,7 @@ echo("DONE....................................................................\n
 
 # Verify that columns exist in metadata
 if(!opt$batch %in% names(data[[]]))
-  stop("Batch column '", xaxis, "' is not present in metadata")
+  stop("Batch column '", opt$batch, "' is not present in metadata")
 
 #   ____________________________________________________________________________
 #   Plot data                                                               ####
@@ -139,7 +146,7 @@ handlers("progress")
 save_batches<- function(xs){
   p <- progressor(along = xs)
   mapply(function(x, name, i, n){
-    saveRDS(x, file = file.path(opt$path, paste0(opt$out, "-", name, ".RDS")))
+    saveRDS(x, file = file.path(opt$path, paste0(opt$out, "_", name, ".RDS")))
     p(message = sprintf("| Batch %d/%d", i, n))
   }, xs, names(xs), seq_along(xs), MoreArgs = list(n = length(xs)), SIMPLIFY = FALSE)
 }

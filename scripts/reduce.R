@@ -9,8 +9,9 @@
 #   ____________________________________________________________________________
 #   Import libraries                                                        ####
 
-suppressPackageStartupMessages(library("Seurat"))
-suppressPackageStartupMessages(library("optparse"))
+.libPaths("/usr/local/lib/R/site-library")
+suppressMessages(suppressWarnings(library(Seurat)))
+suppressMessages(suppressWarnings(library(optparse)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
@@ -28,7 +29,7 @@ option_list <-  list(
               metavar = "character"),
   make_option(c("--path"), 
               type = "character", 
-              default = ".", 
+              default = ".",
               help = crayon::green("Output path to store results [default= %default]"), 
               metavar = "character")
 )
@@ -36,6 +37,12 @@ option_list <-  list(
 
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
+
+print("Options in effect:")
+for (name in names(opt)) {
+	print(paste0("  --", name, " ", opt[[name]]))
+}
+print("")
 
 if (is.null(opt$file)){
   print_help(opt_parser)

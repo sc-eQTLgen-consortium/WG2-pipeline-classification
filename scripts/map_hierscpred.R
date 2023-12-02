@@ -10,11 +10,12 @@
 #   ____________________________________________________________________________
 #   Import libraries                                                        ####
 
-suppressPackageStartupMessages(library("Seurat"))
-suppressPackageStartupMessages(library("HierscPred"))
-suppressPackageStartupMessages(library("optparse"))
-suppressPackageStartupMessages(library("future.apply"))
-suppressPackageStartupMessages(library("progressr"))
+.libPaths("/usr/local/lib/R/site-library")
+suppressMessages(suppressWarnings(library(Seurat)))
+suppressMessages(suppressWarnings(library(HierscPred)))
+suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(future.apply)))
+suppressMessages(suppressWarnings(library(progressr)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
@@ -29,6 +30,11 @@ option_list <-  list(
               type = "character", 
               default = NULL, 
               help = crayon::yellow("Batch column. If provided, each group in from the batch columns is mapped to reference independently"), 
+              metavar = "character"),
+  make_option("--reference",
+              type = "character",
+              default = NULL,
+              help = crayon::green(""),
               metavar = "character"),
   make_option("--thr", 
               type = "numeric", 
@@ -69,7 +75,7 @@ option_list <-  list(
               metavar = "character"),
   make_option("--path", 
               type = "character", 
-              default = ".", 
+              default = ".",
               help = crayon::green("Output path to store results [default= %default]"), 
               metavar = "character")
 )
@@ -77,6 +83,12 @@ option_list <-  list(
 
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
+
+print("Options in effect:")
+for (name in names(opt)) {
+	print(paste0("  --", name, " ", opt[[name]]))
+}
+print("")
 
 if (is.null(opt$file)){
   print_help(opt_parser)
@@ -163,7 +175,7 @@ echo("DONE....................................................................",
 echo("Loading scPred reference................................................",
      "yellow")
 
-reference <- readRDS("/hier_scpred.RDS")
+reference <- readRDS(opt$reference)
 
 echo("DONE....................................................................",
      "yellow")
