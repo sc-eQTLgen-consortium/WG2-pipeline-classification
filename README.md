@@ -1,12 +1,9 @@
-# WG2 pipeline: cell-type classification
+# WG2-pipeline-Classification
+<img src="https://user-images.githubusercontent.com/44268007/89252548-35b96f80-d659-11ea-97e9-4b4176df5f08.png" width="300" height="140" />
 
-<img src="https://avatars.githubusercontent.com/u/66946635?s=400&amp;u=3cae3f11874f9da83e816c6196bbb2cf847c6f44&amp;v=4" width="92"/>
+Part of the sceQTL-Gen consortium pipeline. Step 2, where the cell classification is done.
 
-This repo contains the singularity image, recipe and scripts to perform automatic cell-type classification using the `Seurat` label transfer based on a joint RNA + Protein space implemented as part of `azimuth` and `hierarchical scPred`.
-
-Pipeline documentation can be found here:
-
-[WG2 pipeline classification docs](https://powellgenomicslab.github.io/WG2-pipeline-classification-docs/)
+Please see the [Wiki](https://powellgenomicslab.github.io/WG2-pipeline-classification-docs/) for information on running the Classification pipeline.
 
 # Please report any errors to
 
