@@ -18,3 +18,8 @@ wget https://www.dropbox.com/sh/ekvdocei8r45jxq/AACA17z7PFNbVkeuSavFvjPNa --cont
   && md5sum -c - <<<"c4d941e81eec88c731378ee8dcc3cdc6  WP2_singularity.zip" \
   && unzip WP2_singularity.zip \
   || rm WP2_singularity.zip
+
+echo "Downloading allen_m1c_2019_ssv4.rds"
+wget https://seurat.nygenome.org/azimuth/demo_datasets/allen_m1c_2019_ssv4.rds \
+  && md5sum -c - <<<"c43e0b926f85b89d052db0a7b82f8c07  allen_m1c_2019_ssv4.rds" \
+  || rm allen_m1c_2019_ssv4.rds

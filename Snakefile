@@ -29,12 +29,12 @@ if config["inputs"]["batch_info"] is not None:
     if BATCH_DF.shape[0] <= 1:
         logger.info("\tWarning, Expect more than one row in {} file.\n\tIgnoring batch_info.".format(config["inputs"]["batch_info"]))
     else:
-        BATCH = "--batch {}".format(BATCH_DF.columns[0])
+        BATCH = BATCH_DF.columns[0]
         BATCHES = BATCH_DF.iloc[:, 0].tolist()
 
 # Check if the references exists.
 for reference in ["azimuth", "hierscpred"]:
-    if config["settings"][reference] and not os.path.exists(config["refs"]["ref_dir"] + config["refs_extra"][reference]):
+    if config["settings"][reference] and (not os.path.exists(config["refs"]["ref_dir"] + config["refs_extra"][reference]) or config["refs_extra"][reference] == ""):
         logger.info("Error, could not find the {} file. Please check that the file exists.\n\nExiting.".format(config["refs"]["ref_dir"] + config["refs_extra"]["azimuth"]))
         exit("MissingReferenceFile")
 
@@ -46,13 +46,12 @@ if not config["settings"]["azimuth"] and not config["settings"]["hierscpred"]:
 def get_input_files(wildcards):
     if config["settings"]["azimuth"] and config["settings"]["hierscpred"]:
         return config["outputs"]["output_dir"] + "compare/comp_contingency_table.tsv"
-    elif config["settings"]["azimuth"]:
-        return config["outputs"]["output_dir"] + "map/azimuth_{batch}.RDS"
-    elif config["settings"]["hierscpred"]:
-        return config["outputs"]["output_dir"] + "map/hier_scpred_{batch}.RDS"
+    elif len(BATCHES) == 1 and config["settings"]["azimuth"]:
+        return expand(config["outputs"]["output_dir"] + "map/azimuth_{batch}.RDS", batch=BATCHES)
+    elif len(BATCHES) == 1 and config["settings"]["hierscpred"]:
+        return expand(config["outputs"]["output_dir"] + "map/hier_scpred_{batch}.RDS", batch=BATCHES)
     else:
-        # Should not happen
-        return []
+        return config["outputs"]["output_dir"] + "reduce/reduced_data.RDS"
 
 
 rule all:

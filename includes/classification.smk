@@ -14,7 +14,7 @@ rule split:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-Classification/scripts/split.R",
+        script = "/opt/WG2-pipeline-classification/scripts/split.R",
         batch = BATCH,
         out = "split_object",
         path = config["outputs"]["output_dir"] + "split/"
@@ -31,7 +31,7 @@ rule split:
 
 rule map_azimuth:
     input:
-        file = config["outputs"]["output_dir"] + "split/split_object-{batch}.RDS" if len(BATCHES) > 1 else config["inputs"]["query_rds"],
+        file = config["outputs"]["output_dir"] + "split/split_object_{batch}.RDS" if len(BATCHES) > 1 else config["inputs"]["query_rds"],
         reference = config["refs"]["ref_dir"] + config["refs_extra"]["azimuth"]
     output:
         umap = report(config["outputs"]["output_dir"] + "map/azimuth_{batch}_ref_umap.png", category="Azimuth", subcategory="{batch}", caption="../report_captions/azimuth.rst"),
@@ -46,7 +46,7 @@ rule map_azimuth:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-Classification/scripts/map_azimuth.R",
+        script = "/groups/umcg-biogen/tmp01/output/2022-09-01-scMetaBrainConsortium/2023-11-25-scMetaBrain-Workgroup2Classification/WG2-pipeline-Classification/scripts/map_azimuth.R",
         plan = config["map_extra"]["azimuth_plan"],
         out = "azimuth_{batch}",
         path = config["outputs"]["output_dir"] + "map/"
@@ -79,7 +79,7 @@ rule map_hierscpred:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-Classification/scripts/map_hierscpred.R",
+        script = "/opt/WG2-pipeline-classification/scripts/map_hierscpred.R",
         thr = config["map_extra"]["hierscpred_thr"],
         iter = config["map_extra"]["hierscpred_iter"],
         plan = config["map_extra"]["hierscpred_plan"],
@@ -114,7 +114,7 @@ rule reduce:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-Classification/scripts/reduce.R",
+        script = "/opt/WG2-pipeline-classification/scripts/reduce.R",
         file = config["outputs"]["output_dir"] + "map/",
         out = "reduced_data",
         path = config["outputs"]["output_dir"] + "reduce/"
@@ -143,7 +143,7 @@ rule compare:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-Classification/scripts/compare.R",
+        script = "/opt/WG2-pipeline-classification/scripts/compare.R",
         xaxis = config["compare_extra"]["xaxis"],
         yaxis = config["compare_extra"]["yaxis"],
         sort = config["compare_extra"]["sort"],

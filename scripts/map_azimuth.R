@@ -31,7 +31,7 @@ option_list <-  list(
               default = NULL, 
               help = crayon::yellow("Batch column. If provided, each group in from the batch columns is mapped to reference independently"), 
               metavar = "character"),
-    make_option("--reference",
+  make_option("--reference",
               type = "character",
               default = NULL,
               help = crayon::green(""),

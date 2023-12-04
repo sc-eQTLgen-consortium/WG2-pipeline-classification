@@ -131,13 +131,7 @@ RUN apt-get install -y --no-install-recommends cmake \
     # libdeflate-dev libjbig-dev libtiff-dev libtiff5-dev libtiffxx5
     && apt-get install -y --no-install-recommends libtiff5-dev \
     # Required for hdf5r
-    && apt-get install -y --no-install-recommends libhdf5-dev \
-    # Required for scCustomize
-    # libcairo-gobject2 libcairo-script-interpreter2 libcairo2-dev libice-dev liblzo2-2
-    # libpixman-1-dev libpthread-stubs0-dev libsm-dev libx11-dev libxau-dev libxcb-render0-dev
-    # libxcb-shm0-dev libxcb1-dev libxdmcp-dev libxext-dev libxrender-dev x11proto-dev
-    # xorg-sgml-doctools xtrans-dev
-    && apt-get install -y --no-install-recommends libcairo2-dev
+    && apt-get install -y --no-install-recommends libhdf5-dev
 
 # remotes_2.4.2.1
 RUN R --slave -e 'install.packages("remotes")' \
@@ -185,7 +179,7 @@ RUN R --slave -e 'install.packages("remotes")' \
     && R --slave -e 'remotes::install_github("joseah/HierscPred@2ce27feeabdd22ce210f1a9623db91fe7ec6b0e7", upgrade=FALSE)'
 
 #######################################
-################ WG1-CODE #############
+################ WG2-CODE #############
 #######################################
 
 # Always get our own newest software. IMPORTANT: make sure you use the correct branch here.
