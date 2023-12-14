@@ -3,6 +3,8 @@ import pandas as pd
 import os
 
 # Add trailing /.
+if not config["inputs"]["repo_dir"].endswith("/"):
+    config["inputs"]["repo_dir"] += "/"
 if not config["refs"]["ref_dir"].endswith("/"):
     config["refs"]["ref_dir"] += "/"
 if not config["outputs"]["output_dir"].endswith("/"):

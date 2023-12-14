@@ -5,6 +5,7 @@
 inputs:
   singularity_image: /path/to/singularity/image.sif ### The complete path to the singularity image that has all the softwares
   bind_path: /path/to/bind/to/mount ### List of paths to bind to Singularity. You can specify multiple directories by adding a "," between them. Eg. ${DIRECTORY1},${DIRECTORY2}
+  repo_dir: /path/to/repo/dir/ ### Path to the github repository directory
   query_rds: /path/to/query_rds ### RDS file you wish to classify
   batch_info: /path/to/batches/file.tsv ### Batch file. If provided, each group in from the batch columns is mapped to reference independently
 
@@ -15,6 +16,8 @@ outputs:
   output_dir: /path/to/parent/out/dir ### The path to the parent dir where you would like all outputs/results saved. This path must exist before running.
 
 settings:
+  cite_seq: True
+  refdata: "celltype.l2=celltype.l2"
   azimuth: True
   hierscpred: True
 

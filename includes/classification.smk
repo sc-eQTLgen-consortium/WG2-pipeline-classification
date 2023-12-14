@@ -14,7 +14,7 @@ rule split:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-classification/scripts/split.R",
+        script = config["inputs"]["repo_dir"] + "scripts/split.R",
         batch = BATCH,
         out = "split_object",
         path = config["outputs"]["output_dir"] + "split/"
@@ -34,8 +34,8 @@ rule map_azimuth:
         file = config["outputs"]["output_dir"] + "split/split_object_{batch}.RDS" if len(BATCHES) > 1 else config["inputs"]["query_rds"],
         reference = config["refs"]["ref_dir"] + config["refs_extra"]["azimuth"]
     output:
-        umap = report(config["outputs"]["output_dir"] + "map/azimuth_{batch}_ref_umap.png", category="Azimuth", subcategory="{batch}", caption="../report_captions/azimuth.rst"),
-        spca = report(config["outputs"]["output_dir"] + "map/azimuth_{batch}_ref_spca.png", category="Azimuth", subcategory="{batch}", caption="../report_captions/azimuth.rst"),
+        umap = report(config["outputs"]["output_dir"] + "map/azimuth_{batch}_ref_umap.png", category="Azimuth", subcategory="{batch}", caption=config["inputs"]["repo_dir"] + "report_captions/azimuth.rst"),
+        pca = report(config["outputs"]["output_dir"] + ("map/azimuth_{batch}_ref_spca.png" if config["settings"]["citeseq"] else "map/azimuth_{batch}_ref_pca.png"), category="Azimuth", subcategory="{batch}", caption=config["inputs"]["repo_dir"] + "report_captions/azimuth.rst"),
         file = temp(config["outputs"]["output_dir"] + "map/azimuth_{batch}.RDS") if len(BATCHES) > 1 else config["outputs"]["output_dir"] + "map/azimuth_{batch}.RDS"
     resources:
         mem = lambda wildcards, attempt: (attempt * config["map"]["azimuth_memory"] * config["map"]["azimuth_threads"] - config["settings_extra"]["memory_buffer"]),
@@ -46,7 +46,8 @@ rule map_azimuth:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/groups/umcg-biogen/tmp01/output/2022-09-01-scMetaBrainConsortium/2023-11-25-scMetaBrain-Workgroup2Classification/WG2-pipeline-Classification/scripts/map_azimuth.R",
+        script = config["inputs"]["repo_dir"] + "scripts/" + ("map_azimuth_citeseq.R" if config["settings"]["citeseq"] else "map_azimuth.R"),
+        refdata = config["settings"]["refdata"],
         plan = config["map_extra"]["azimuth_plan"],
         out = "azimuth_{batch}",
         path = config["outputs"]["output_dir"] + "map/"
@@ -56,6 +57,7 @@ rule map_azimuth:
         singularity exec --bind {params.bind} {params.sif} Rscript {params.script} \
             --file {input.file} \
             --reference {input.reference} \
+            --refdata {params.refdata} \
             --plan {params.plan} \
             --workers {threads} \
             --mem {resources.mem} \
@@ -79,7 +81,7 @@ rule map_hierscpred:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-classification/scripts/map_hierscpred.R",
+        script = config["inputs"]["repo_dir"] + "scripts/map_hierscpred.R",
         thr = config["map_extra"]["hierscpred_thr"],
         iter = config["map_extra"]["hierscpred_iter"],
         plan = config["map_extra"]["hierscpred_plan"],
@@ -114,7 +116,7 @@ rule reduce:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-classification/scripts/reduce.R",
+        script = config["inputs"]["repo_dir"] + "scripts/reduce.R",
         file = config["outputs"]["output_dir"] + "map/",
         out = "reduced_data",
         path = config["outputs"]["output_dir"] + "reduce/"
@@ -132,8 +134,8 @@ rule compare:
     input:
         file = config["outputs"]["output_dir"] + "reduce/reduced_data.RDS" if len(BATCHES) > 1 else config["outputs"]["output_dir"] + "map/hier_scpred_{batch}.RDS".format(batch=BATCHES[0])
     output:
-        counts_heatmap = report(config["outputs"]["output_dir"] + "compare/comp_heatmap_counts.pdf", category="Compare", caption="../report_captions/compare.rst"),
-        prop_heatmap = report(config["outputs"]["output_dir"] + "compare/comp_heatmap_prop.pdf", category="Compare", caption="../report_captions/compare.rst"),
+        counts_heatmap = report(config["outputs"]["output_dir"] + "compare/comp_heatmap_counts.pdf", category="Compare", caption=config["inputs"]["repo_dir"] + "report_captions/compare.rst"),
+        prop_heatmap = report(config["outputs"]["output_dir"] + "compare/comp_heatmap_prop.pdf", category="Compare", caption=config["inputs"]["repo_dir"] + "report_captions/compare.rst"),
         contingency_table = config["outputs"]["output_dir"] + "compare/comp_contingency_table.tsv"
     resources:
         mem_per_thread_gb = lambda wildcards, attempt: attempt * config["compare"]["compare_memory"],
@@ -143,7 +145,7 @@ rule compare:
     params:
         bind = config["inputs"]["bind_path"],
         sif = config["inputs"]["singularity_image"],
-        script = "/opt/WG2-pipeline-classification/scripts/compare.R",
+        script = config["inputs"]["repo_dir"] + "scripts/compare.R",
         xaxis = config["compare_extra"]["xaxis"],
         yaxis = config["compare_extra"]["yaxis"],
         sort = config["compare_extra"]["sort"],

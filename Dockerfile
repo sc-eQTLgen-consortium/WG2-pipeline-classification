@@ -178,24 +178,6 @@ RUN R --slave -e 'install.packages("remotes")' \
     # Using commit of Nov 21, 2021: HierscPred_0.1.0
     && R --slave -e 'remotes::install_github("joseah/HierscPred@2ce27feeabdd22ce210f1a9623db91fe7ec6b0e7", upgrade=FALSE)'
 
-#######################################
-################ WG2-CODE #############
-#######################################
-
-# Always get our own newest software. IMPORTANT: make sure you use the correct branch here.
-# Delete all the non python / R files since we won't need them anyway.
-RUN cd /opt \
-    && GITHUB_BRANCH=scMetaBrain \
-    && wget https://github.com/sc-eQTLgen-consortium/WG2-pipeline-classification/archive/refs/heads/${GITHUB_BRANCH}.zip \
-    && unzip -q ${GITHUB_BRANCH}.zip \
-    && rm ${GITHUB_BRANCH}.zip \
-    && mv WG2-pipeline-classification-${GITHUB_BRANCH} WG2-pipeline-classification \
-    && cd WG2-pipeline-classification \
-    && find . -type f ! \( -iname \*.py -o -iname \*.R \) -delete \
-    && find . -type d -empty -delete \
-    && find . -type f \( -iname \*.py -o -iname \*.R \) -exec chmod 777 {} \;
-
-
 ####################################
 ################ CLEAN #############
 ####################################

@@ -147,7 +147,7 @@ handlers("progress")
 
 
 if(opt$plan != "sequential"){
-  options(future.globals.maxSize = opt$mem * 1024^3)
+  options(future.globals.maxSize=(args$mem * 1000 * 1024^2))
   plan(opt$plan, workers = opt$workers)
 }
 
