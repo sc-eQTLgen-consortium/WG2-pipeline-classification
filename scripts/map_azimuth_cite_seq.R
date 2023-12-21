@@ -16,6 +16,7 @@ suppressMessages(suppressWarnings(library(SeuratDisk)))
 suppressMessages(suppressWarnings(library(ggplot2)))
 suppressMessages(suppressWarnings(library(progressr)))
 suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(tidyverse)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
@@ -63,7 +64,11 @@ option_list <- list(
               help = crayon::yellow("Maximum allowed total size (in GB) of global variables identified
                 [default= %default]"),
               metavar = "numeric"),
-
+  make_option(c("--palette"),
+              type = "character",
+              default = NULL,
+              help = crayon::green("The palette to use"),
+              metavar = "character"),
   make_option("--out",
               type = "character",
               default = "azimuth",
@@ -79,12 +84,6 @@ option_list <- list(
 
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
-
-print("Options in effect:")
-for (name in names(opt)) {
-  print(paste0("  --", name, " ", opt[[name]]))
-}
-print("")
 
 if (is.null(opt$file)) {
   print_help(opt_parser)
@@ -111,6 +110,8 @@ echo <- function(text, color = c("green", "red", "yellow", "blue")) {
 
 }
 
+
+
 #   ____________________________________________________________________________
 #   Input information                                                       ####
 
@@ -119,9 +120,12 @@ echo("Input information.......................................................",
 
 echo(paste0(crayon::bold("Input file:\n"), opt$file), "yellow")
 echo(paste0(crayon::bold("Batch variable:\n"), opt$batch), "yellow")
+echo(paste0(crayon::bold("Reference file:\n"), opt$reference), "yellow")
+echo(paste0(crayon::bold("Reference data:\n"), opt$refdata), "yellow")
 echo(paste0(crayon::bold("Parallelization plan:\n"), opt$plan), "yellow")
 echo(paste0(crayon::bold("Number of workers: \n"), opt$workers), "yellow")
 echo(paste0(crayon::bold("maxSize future global: \n"), opt$mem), "yellow")
+echo(paste0(crayon::bold("Palette: "), opt$palette), "yellow")
 echo(paste0(crayon::bold("Output base filename: "), opt$out), "yellow")
 echo(paste0(crayon::bold("Output directory: "), opt$path), "yellow")
 
@@ -167,7 +171,13 @@ echo("DONE....................................................................",
 echo("Loading CITE-seq reference..............................................",
      "yellow")
 
-reference <- LoadH5Seurat(opt$reference)
+reference <- tryCatch({
+	print("Loading reference using readRDS()")
+	reference <- readRDS(opt$reference)
+},error = function(e){
+	print("Failed, trying to load reference using LoadH5Seurat()")
+	reference <- LoadH5Seurat(opt$reference)
+})
 
 echo("DONE....................................................................",
      "yellow")
@@ -242,11 +252,14 @@ echo("DONE....................................................................",
 echo("Mapping query cells for each batch......................................",
      "green")
 
-refdata <- list(predicted_ADT = "ADT")
-for (refcolumn in unlist(strsplit(refdatastr, ","))) {
+refdata <- list()
+mapquery.refdata <- list(predicted_ADT = "ADT")
+for (refcolumn in unlist(strsplit(opt$refdata, ";"))) {
   keyvalue <- unlist(strsplit(refcolumn, "="))
   refdata[[keyvalue[1]]] <- keyvalue[[2]]
+  mapquery.refdata[[keyvalue[1]]] <- keyvalue[[2]]
 }
+
 
 map_cells <- function(anchors, batches) {
   p <- progressor(along = anchors)
@@ -256,7 +269,7 @@ map_cells <- function(anchors, batches) {
       anchorset = anchor,
       query = x,
       reference = reference,
-      refdata = refdata,
+      refdata = mapquery.refdata,
       reference.reduction = "spca",
       reduction.model = "wnn.umap")
 
@@ -275,21 +288,21 @@ echo("DONE....................................................................",
 echo("Gathering results........................................................",
      "green")
 
-metadata <- lapply(batches,
-                   function(x) x[[]][,
-                     c(paste0("predicted.",
-                              names(refdata)),
-                       paste0("predicted.",
-                              names(refdata),
-                              ".score")), drop = FALSE
-                   ])
+metadata.columns <- c(paste0("predicted.", names(refdata)), paste0("predicted.", names(refdata), ".score"))
+if (!is.null(opt$batch)) {
+  metadata.columns <- c(opt$batch, metadata.columns)
+}
 
+metadata <- lapply(batches, function(x) x[[]][, metadata.columns, drop = FALSE])
 metadata <- lapply(metadata, function(x) {
   x$barcode <- row.names(x)
   x
 })
 
 metadata <- do.call(rbind, metadata)
+metadata <- metadata[, c("barcode", metadata.columns)]
+write_delim(metadata, file=gzfile(paste0(opt$path, opt$out, ".metadata.tsv.gz")), delim="\t")
+
 rownames(metadata) <- metadata$barcode
 metadata$barcode <- NULL
 data <- AddMetaData(data, metadata)
@@ -345,20 +358,47 @@ echo("DONE....................................................................",
 echo("Plotting data...........................................................",
      "green")
 
+palette <- NULL
+if(!is.null(opt$palette)){
+  palette <- c()
+  palette_names <- c()
+  for (ct in unlist(strsplit(opt$palette, ";"))) {
+    keyvalue <- unlist(strsplit(ct, "="))
+    palette <- c(palette, keyvalue[[2]])
+    palette_names <- c(palette_names, keyvalue[[1]])
+  }
+  names(palette) <- palette_names
+}
+
 for (dim_reduction in c("spca", "umap")) {
-  plots <- c()
-  for (refdata_value in names(refdata)) {
+  plot <- NULL
+  for (group_by in c("Pool", paste0("predicted.", names(refdata)))) {
+        cols <- palette
+    for (value in unique(data[[group_by]])) {
+      if (!value %in% names(palette)) {
+        cols <- NULL
+      }
+    }
+
     p <- DimPlot(data,
-                 group.by = paste0("predicted.", refdata_value),
+                 group.by = group_by,
+                 cols = cols,
                  reduction = paste0("azimuth_", dim_reduction),
                  label = TRUE,
                  repel = TRUE,
-                 raster = TRUE)
-    plots <- c(plots, p)
+                 raster = TRUE) + NoLegend()
+    if (is.null(plot)) {
+      plot <- p
+    } else {
+      plot <- plot + p
+    }
   }
-  ggsave(file.path(opt$path, paste0(opt$out, "_ref_", dim_reduction, ".png")),
-         plots,
-         width = 10)
+  ncols <- ceiling(length(plot) / 2)
+  nrows <- ceiling(length(plot) / ncols)
+  ggsave(paste0(opt$path, opt$out, "_ref_", dim_reduction, ".png"),
+         plot,
+         width = min(10 * ncols, 49),
+         height = min(10 * nrows, 49))
 }
 
 echo("DONE....................................................................",
@@ -366,10 +406,10 @@ echo("DONE....................................................................",
 #   ____________________________________________________________________________
 #   Export data                                                             ####
 
-echo("Saving query data.......................................................",
-     "yellow")
-
-saveRDS(data, file.path(opt$path, paste0(opt$out, ".RDS")))
-
-echo("DONE....................................................................",
-     "yellow")
+# echo("Saving query data.......................................................",
+#      "yellow")
+#
+# saveRDS(data, paste0(opt$path, opt$out, ".RDS"))
+#
+# echo("DONE....................................................................",
+#      "yellow")

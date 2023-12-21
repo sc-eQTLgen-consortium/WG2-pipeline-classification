@@ -131,7 +131,9 @@ RUN apt-get install -y --no-install-recommends cmake \
     # libdeflate-dev libjbig-dev libtiff-dev libtiff5-dev libtiffxx5
     && apt-get install -y --no-install-recommends libtiff5-dev \
     # Required for hdf5r
-    && apt-get install -y --no-install-recommends libhdf5-dev
+    && apt-get install -y --no-install-recommends libhdf5-dev \
+    # Required for scCustomize
+    && apt-get install -y --no-install-recommends libcairo2-dev
 
 # remotes_2.4.2.1
 RUN R --slave -e 'install.packages("remotes")' \
@@ -146,6 +148,7 @@ RUN R --slave -e 'install.packages("remotes")' \
     && R --slave -e 'remotes::install_version("ggplot2", version = "3.4.3", upgrade=FALSE)' \
     # Matrix_1.6-4
     && R --slave -e 'remotes::install_version("Matrix", version = "1.6-4", upgrade=FALSE)' \
+    && R --slave -e 'remotes::install_version("tidyverse", version = "2.0.0", upgrade=FALSE)' \
     # Rcpp_1.0.11 RcppEigen_0.3.3.9.4 progressr_0.14.0 sp_2.1-2
     && R --slave -e 'remotes::install_version("SeuratObject", version = "4.1.4", upgrade=FALSE)' \
     # sitmo_2.0.2 BH_1.81.0-1 spatstat.utils_3.0-4 tensor_1.5 abind_1.4-5 polyclip_1.10-6 deldir_2.0-2 
@@ -173,6 +176,7 @@ RUN R --slave -e 'install.packages("remotes")' \
     # foreach_1.5.2 e1071_1.7-13 vipor_0.4.5 beeswarm_0.4.0 RhpcBLASctl_0.23-42 kernlab_0.9-32 caret_6.0-94
     # MLmetrics_1.1.1 ggbeeswarm_0.7.2
     && R --slave -e 'remotes::install_github("mojaveazure/seurat-disk@877d4e18ab38c686f5db54f8cd290274ccdbe295", upgrade=FALSE)' \
+    && R --slave -e 'remotes::install_version("scCustomize", version = "1.1.3", upgrade=FALSE)' \
     # None
     && R --slave -e 'remotes::install_version("viridis", version = "0.6.4", upgrade=FALSE)' \
     # Using commit of Nov 21, 2021: HierscPred_0.1.0

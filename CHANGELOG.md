@@ -9,9 +9,12 @@ Note that this branch is in beta and version 2.0.0 is not yet ready for release.
 #### Additions
 - Build snakemake, similar to other workgroups, around pre-existing scripts
 - Added `map_azimuth.R` script for non CITE-seq annotation
+- Added `make_seurat` rule and script to allow using CellRanger output directly as input for the pipeline
+- Added use of custom palette
+- Added `visualise.R` script to create some overview plots
 
 #### Fixes
-- Fixed issue in split.R where it looks for unknown variable `xaxis` instead of `opt$batch'`
+- Fixed issue in `split.R` where it looks for unknown variable `xaxis` instead of `opt$batch'`
 - Fixed issue where a wrong calculation for `future.globals.maxSize` was used
 
 #### Changes
@@ -20,3 +23,5 @@ Note that this branch is in beta and version 2.0.0 is not yet ready for release.
 - Moved scripts outside of image for flexibility
 - Switched from singularity to Docker
 - Updated all software versions
+- Made all files gzipped
+- Moved merging of the pools to WG3, only keep merging of the cell assignment metadata in this WG

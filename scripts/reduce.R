@@ -2,7 +2,7 @@
 #   Script information                                                      ####
 
 # title: Merge multiple Seurat objects
-# author: Jose Alquicira Hernandez, Lieke Michelsen
+# author: Jose Alquicira Hernandez, Lieke Michelsen, Martijn Vochteloo
 # date: 2021-11-17
 # description: Aggregates input Seurat objects into a single object
 
@@ -10,22 +10,27 @@
 #   Import libraries                                                        ####
 
 .libPaths("/usr/local/lib/R/site-library")
-suppressMessages(suppressWarnings(library(Seurat)))
 suppressMessages(suppressWarnings(library(optparse)))
+suppressMessages(suppressWarnings(library(tidyverse)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
 
 option_list <-  list(
-  make_option(c("--file"),
+  make_option("--poolsheet",
               type = "character",
               default = NULL,
-              help = crayon::green("Directory filename containing Seurat RDS objects"),
+              help = crayon::green(""),
               metavar = "character"),
-  make_option(c("--out"), 
+  make_option("--indir",
+              type = "character",
+              default = NULL,
+              help = crayon::green(""),
+              metavar = "character"),
+  make_option(c("--out"),
               type = "character", 
-              default = "reduced_data", 
-              help = crayon::green("Output file name [default= %default]"), 
+              default = NULL,
+              help = crayon::green("Output file name"),
               metavar = "character"),
   make_option(c("--path"), 
               type = "character", 
@@ -38,15 +43,17 @@ option_list <-  list(
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-print("Options in effect:")
-for (name in names(opt)) {
-	print(paste0("  --", name, " ", opt[[name]]))
-}
-print("")
-
-if (is.null(opt$file)){
+if (is.null(opt$poolsheet)){
   print_help(opt_parser)
-  stop(crayon::red("Directory name is missing"), call. = FALSE)
+  stop(crayon::red("Poolsheet file is missing"), call. = FALSE)
+}
+if (is.null(opt$indir)){
+  print_help(opt_parser)
+  stop(crayon::red("Input directory name is missing"), call. = FALSE)
+}
+if (is.null(opt$out)){
+  print_help(opt_parser)
+  stop(crayon::red("Output file name is missing"), call. = FALSE)
 }
 
 #   ____________________________________________________________________________
@@ -75,7 +82,8 @@ echo <- function(text, color = c("green", "red", "yellow", "blue")){
 echo("Input information.......................................................",
      "yellow")
 
-echo(paste0(crayon::bold("Input file:\n"), opt$file), "yellow")
+echo(paste0(crayon::bold("Poolsheet file:\n"), opt$poolsheet), "yellow")
+echo(paste0(crayon::bold("Input directory:\n"), opt$indir), "yellow")
 echo(paste0(crayon::bold("Output base filename: "), opt$out), "yellow")
 echo(paste0(crayon::bold("Output directory: "), opt$path), "yellow")
 
@@ -86,18 +94,18 @@ echo("DONE....................................................................",
 #   ____________________________________________________________________________
 #   Import query data                                                       ####
 
-echo("Loading query data......................................................",
+echo("Loading metadata......................................................",
      "blue")
 
-list_dirs <- list.files(opt$file, full.names = TRUE)
-list_dirs <- grep(".RDS$", list_dirs, value = TRUE)
+pools <- read_delim(opt$poolsheet, delim = "\t")
 
-data <- lapply(list_dirs, function(x){
-  message("Reading ", x)
-  x <- readRDS(x)
-  if(!inherits(x, "Seurat")) stop("Input query data is not a Seurat object")
-  x
-})
+load_metadata <- function(row){
+  message("Reading ", row[["Pool"]])
+  metadata <- read_delim(paste0(opt$indir, opt$out, ".metadata.tsv.gz"), delim="\t")
+  metadata$pool <- row[["Pool"]]
+  return(metadata)
+}
+metadata <- apply(pools, 1, load_metadata)
 
 echo("DONE....................................................................",
      "blue")
@@ -108,10 +116,7 @@ echo("DONE....................................................................",
 echo("Merging objects.........................................................",
      "blue")
 
-reductions <- lapply(data, Reductions)
-reductions <- unique(unlist(reductions))
-
-data <- merge(data[[1]], data[-1], merge.dr = reductions)
+metadata <- as.data.frame(do.call(rbind,metadata))
 
 echo("DONE....................................................................",
      "blue")
@@ -121,7 +126,7 @@ echo("DONE....................................................................",
 echo("Saving results..........................................................",
      "yellow")
 
-saveRDS(data, file = file.path(opt$path, paste0(opt$out, ".RDS")))
+write_delim(metadata, gzfile(paste0(opt$path, opt$out, ".metadata.tsv.gz")), "\t")
 
 echo("DONE....................................................................",
      "yellow")

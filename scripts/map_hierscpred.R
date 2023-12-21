@@ -16,6 +16,7 @@ suppressMessages(suppressWarnings(library(HierscPred)))
 suppressMessages(suppressWarnings(library(optparse)))
 suppressMessages(suppressWarnings(library(future.apply)))
 suppressMessages(suppressWarnings(library(progressr)))
+suppressMessages(suppressWarnings(library(tidyverse)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
@@ -84,12 +85,6 @@ option_list <-  list(
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-print("Options in effect:")
-for (name in names(opt)) {
-	print(paste0("  --", name, " ", opt[[name]]))
-}
-print("")
-
 if (is.null(opt$file)){
   print_help(opt_parser)
   stop(crayon::red("Query file name is missing"), call. = FALSE)
@@ -124,6 +119,7 @@ echo("Input information.......................................................",
 
 echo(paste0(crayon::bold("Input file:\n"), opt$file), "yellow")
 echo(paste0(crayon::bold("Batch variable:\n"), opt$batch), "yellow")
+echo(paste0(crayon::bold("Reference file:\n"), opt$reference), "yellow")
 echo(paste0(crayon::bold("Probability threshold:\n"), opt$thr), "yellow")
 echo(paste0(crayon::bold("Harmony iterations:\n"), opt$iter), "yellow")
 echo(paste0(crayon::bold("Parallelization plan:\n"), opt$plan), "yellow")
@@ -223,15 +219,25 @@ echo("DONE....................................................................",
 echo("Gathering results........................................................",
      "green")
 
-scpred_prediction <- lapply(batches,
-                            function(x) x[[]][,
-                                              "scpred_prediction", drop = FALSE
-                            ])
+metadata.columns <- c("scpred_prediction")
+if (!is.null(opt$batch)) {
+  metadata.columns <- c(opt$batch, metadata.columns)
+}
+
+metadata <- lapply(batches, function(x) x[[]][, metadata.columns, drop = FALSE])
+metadata <- lapply(metadata, function(x) {
+  x$barcode <- row.names(x)
+  x
+})
+
+metadata <- do.call(rbind, metadata)
+metadata <- metadata[, c("barcode", metadata.columns)]
+write_delim(metadata, file=gzfile(paste0(opt$path, opt$out, ".metadata.tsv.gz")), delim="\t")
 
 
-
-scpred_prediction <- do.call(rbind, scpred_prediction)
-data <- AddMetaData(data, scpred_prediction)
+rownames(metadata) <- metadata$barcode
+metadata$barcode <- NULL
+data <- AddMetaData(data, metadata)
 
 echo("DONE....................................................................",
      "green")
@@ -239,10 +245,10 @@ echo("DONE....................................................................",
 #   ____________________________________________________________________________
 #   Export data                                                             ####
 
-echo("Saving query data.......................................................",
-     "yellow")
-
-saveRDS(data, file.path(opt$path, paste0(opt$out,".RDS")))
-
-echo("DONE....................................................................",
-     "yellow")
+# echo("Saving query data.......................................................",
+#      "yellow")
+#
+# saveRDS(data, paste0(opt$path, opt$out, ".RDS")))
+#
+# echo("DONE....................................................................",
+#      "yellow")

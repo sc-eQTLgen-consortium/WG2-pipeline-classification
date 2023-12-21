@@ -45,12 +45,6 @@ option_list <-  list(
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-print("Options in effect:")
-for (name in names(opt)) {
-	print(paste0("  --", name, " ", opt[[name]]))
-}
-print("")
-
 if (is.null(opt$file)){
   print_help(opt_parser)
   stop(crayon::red("Query file name is missing"), call. = FALSE)

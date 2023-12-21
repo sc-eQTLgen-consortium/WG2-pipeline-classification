@@ -2,7 +2,7 @@
 #   Script information                                                      ####
 
 # title: Plot comparison results
-# author: Jose Alquicira Hernandez, Lieke Michelsen
+# author: Jose Alquicira Hernandez, Lieke Michelsen, Martijn Vochteloo
 # date: 2021-11-17
 # description: Plots a heatmap based on a contingency table from two columns from
 # the Seurat metadata object slot
@@ -15,15 +15,21 @@ suppressMessages(suppressWarnings(library(Seurat)))
 suppressMessages(suppressWarnings(library(optparse)))
 suppressMessages(suppressWarnings(library(ggplot2)))
 suppressMessages(suppressWarnings(library(viridis)))
+suppressMessages(suppressWarnings(library(tidyverse)))
 
 #   ____________________________________________________________________________
 #   Set up parameter variables                                              ####
 
 option_list <-  list(
-  make_option("--file",
+  make_option("--metadata1",
               type = "character",
               default = NULL,
-              help = crayon::green("RDS object file name"),
+              help = crayon::green(""),
+              metavar = "character"),
+  make_option("--metadata2",
+              type = "character",
+              default = NULL,
+              help = crayon::green(""),
               metavar = "character"),
   make_option("--xaxis",
               type = "character",
@@ -56,15 +62,13 @@ option_list <-  list(
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-print("Options in effect:")
-for (name in names(opt)) {
-	print(paste0("  --", name, " ", opt[[name]]))
-}
-print("")
-
-if (is.null(opt$file)){
+if (is.null(opt$metadata1)){
   print_help(opt_parser)
-  stop(crayon::red("Query file name is missing"), call. = FALSE)
+  stop(crayon::red("Metadata file 1 is missing"), call. = FALSE)
+}
+if (is.null(opt$metadata2)){
+  print_help(opt_parser)
+  stop(crayon::red("Metadata file 2 is missing"), call. = FALSE)
 }
 
 #   ____________________________________________________________________________
@@ -73,9 +77,9 @@ if (is.null(opt$file)){
 echo <- function(text, color = c("green", "red", "yellow", "blue")){
   
   text <- paste0(text, "\n")
-  
+
   color <- match.arg(color)
-  
+
   if(color == "green")
     cat(crayon::green(text))
   else if(color == "red")
@@ -84,7 +88,7 @@ echo <- function(text, color = c("green", "red", "yellow", "blue")){
     cat(crayon::yellow(text))
   else if(color == "blue")
     cat(crayon::blue(text))
-  
+
 }
 
 
@@ -177,7 +181,8 @@ createheatmap <- function(x, order = TRUE){
 echo("Input information.......................................................",
      "yellow")
 
-echo(paste0(crayon::bold("Input file:\n"), opt$file), "yellow")
+echo(paste0(crayon::bold("Metadata file 1:\n"), opt$metadata1), "yellow")
+echo(paste0(crayon::bold("Metadata file 2:\n"), opt$metadata2), "yellow")
 echo(paste0(crayon::bold("X axis:\n"), opt$xaxis), "yellow")
 echo(paste0(crayon::bold("Y axis:\n"), opt$yaxis), "yellow")
 echo(paste0(crayon::bold("Sorted labels:\n"), opt$sort), "yellow")
@@ -192,11 +197,22 @@ echo("DONE....................................................................",
 #   ____________________________________________________________________________
 #   Import query data                                                       ####
 
-echo("Loading query data......................................................",
+echo("Loading data......................................................",
      "blue")
 
-data <- readRDS(opt$file)
-if(!inherits(data, "Seurat")) stop("Input query data is not a Seurat object")
+metadata1 <- read_delim(opt$metadata1, delim="\t")
+metadata2 <- read_delim(opt$metadata2, delim="\t")
+
+echo("DONE....................................................................",
+     "blue")
+
+#   ____________________________________________________________________________
+#   Merge data                                                              ####
+
+echo("Merging objects.........................................................",
+     "blue")
+
+metadata <- merge(metadata1, metadata2, by = 'barcode')
 
 echo("DONE....................................................................",
      "blue")
@@ -206,28 +222,24 @@ echo("DONE....................................................................",
 #   Validate columns                                                        ####
 
 
-xaxis <- opt$xaxis
-yaxis <- opt$yaxis
-
-
 # Verify that columns exist in metadata
-if(!xaxis %in% names(data[[]]))
-  stop("Column '", xaxis, "' is not present in metadata")
+if(!opt$xaxis %in% colnames(metadata))
+  stop("Column '", opt$xaxis, "' is not present in metadata")
 
-if(!yaxis %in% names(data[[]]))
-  stop("Column '", yaxis, "' is not present in metadata")
+if(!opt$yaxis %in% colnames(metadata))
+  stop("Column '", opt$yaxis, "' is not present in metadata")
 
 # Verify data type for variables of interest
 
-if(!(is.character(data[[]][, xaxis]) | is.factor(data[[]][, xaxis])))
-  stop("Metadata column '",  xaxis, "' has to be of type character or factor")
-if(!(is.character(data[[]][, yaxis]) | is.factor(data[[]][, yaxis])))
-  stop("Metadata column '",  yaxis, "' has to be of type character or factor")
+if(!(is.character(metadata[, opt$xaxis]) | is.factor(metadata[, opt$xaxis])))
+  stop("Metadata column '",  opt$xaxis, "' has to be of type character or factor")
+if(!(is.character(metadata[, opt$yaxis]) | is.factor(metadata[, opt$yaxis])))
+  stop("Metadata column '",  opt$yaxis, "' has to be of type character or factor")
 
 #   ____________________________________________________________________________
 #   Plot data                                                               ####
 
-md <- FetchData(data, c(xaxis, yaxis))
+md <- metadata[, c(opt$xaxis, opt$yaxis)]
 res <- createheatmap(md, order = opt$sort)
 
 #   ____________________________________________________________________________
@@ -236,10 +248,9 @@ res <- createheatmap(md, order = opt$sort)
 echo("Saving results..........................................................",
      "yellow")
 
-ggsave(file.path(opt$path, paste0(opt$out, "_heatmap_counts.pdf")), plot = res$count, width = 12, height = 9, dpi = "print")
-ggsave(file.path(opt$path, paste0(opt$out, "_heatmap_prop.pdf")), plot = res$prop, width = 12, height = 9, dpi = "print")
-write.table(res$cont_table, file = file.path(opt$path, paste0(opt$out, "_contingency_table.tsv")), 
-            quote = FALSE, sep = "\t", row.names = FALSE)
+ggsave(paste0(opt$path, opt$out, "_heatmap_counts.pdf"), plot = res$count, width = 12, height = 9, dpi = "print")
+ggsave(paste0(opt$path, opt$out, "_heatmap_prop.pdf"), plot = res$prop, width = 12, height = 9, dpi = "print")
+write_delim(res$cont_table, gzfile(paste0(opt$path, opt$out, "_contingency_table.tsv.gz")), "\t")
 
 
 echo("DONE....................................................................",
