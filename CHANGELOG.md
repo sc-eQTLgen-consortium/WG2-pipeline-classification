@@ -10,8 +10,8 @@ Note that this branch is in beta and version 2.0.0 is not yet ready for release.
 - Build snakemake, similar to other workgroups, around pre-existing scripts
 - Added `map_azimuth.R` script for non CITE-seq annotation
 - Added `make_seurat` rule and script to allow using CellRanger output directly as input for the pipeline
-- Added use of custom palette
 - Added `visualise.R` script to create some overview plots
+- Added use of custom palette
 
 #### Fixes
 - Fixed issue in `split.R` where it looks for unknown variable `xaxis` instead of `opt$batch'`
@@ -24,4 +24,8 @@ Note that this branch is in beta and version 2.0.0 is not yet ready for release.
 - Switched from singularity to Docker
 - Updated all software versions
 - Made all files gzipped
+- Made sort order variable in `compare.R`
 - Moved merging of the pools to WG3, only keep merging of the cell assignment metadata in this WG
+
+#### Known issues
+- Currently only able to split on `Pool`. I could have renamed this to a 'Batch' variable but I was afraid it would make things confusing since other workgroups also use pools.

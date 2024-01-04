@@ -102,7 +102,6 @@ pools <- read_delim(opt$poolsheet, delim = "\t")
 load_metadata <- function(row){
   message("Reading ", row[["Pool"]])
   metadata <- read_delim(paste0(opt$indir, opt$out, ".metadata.tsv.gz"), delim="\t")
-  metadata$pool <- row[["Pool"]]
   return(metadata)
 }
 metadata <- apply(pools, 1, load_metadata)

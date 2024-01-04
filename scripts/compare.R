@@ -41,10 +41,10 @@ option_list <-  list(
               default = "scpred_prediction",
               help = crayon::green("Column in metadata"),
               metavar = "character"),
-  make_option("--sort",
-              type = "logical",
-              default = TRUE,
-              help = crayon::green("Sort labels in both axes to match cell type hierarchy?"),
+  make_option("--order",
+              type = "character",
+              default = NULL,
+              help = crayon::green("The order for both axes to match cell type hierarchy"),
               metavar = "character"),
   make_option("--out",
               type = "character",
@@ -92,7 +92,7 @@ echo <- function(text, color = c("green", "red", "yellow", "blue")){
 }
 
 
-createheatmap <- function(x, order = TRUE){
+createheatmap <- function(x, order = NULL){
   
   xaxis <- x[, 1]
   yaxis <- x[, 2]
@@ -109,13 +109,8 @@ createheatmap <- function(x, order = TRUE){
   grey_col[2501:5000] <- grey_col[5000]
   
   
-  if(order){
-    label_order <- c("CD4 Naive", "CD4 TCM", "CD4 TEM", "CD4 CTL", "Treg", "CD4 Proliferating", 
-                     "CD8 Naive", "CD8 TCM", "CD8 TEM", "CD8 Proliferating", "gdT", "MAIT", "ILC", 
-                     "dnT", "NK", "NK_CD56bright", "NK Proliferating", "B naive", "B intermediate", 
-                     "B memory", "Plasmablast", "CD14 Mono", "CD16 Mono", "cDC1", "cDC2", "pDC", 
-                     "ASDC", "HSPC", "Platelet", "Eryth", "Doublet")
-    
+  if(!is.null(order)){
+    label_order <- unlist(strsplit(label_order, ";"))
     cont_table[,1] <- factor(cont_table[,1], levels = label_order)
     cont_table[,2] <- factor(cont_table[,2], levels = label_order)
   }
@@ -185,7 +180,7 @@ echo(paste0(crayon::bold("Metadata file 1:\n"), opt$metadata1), "yellow")
 echo(paste0(crayon::bold("Metadata file 2:\n"), opt$metadata2), "yellow")
 echo(paste0(crayon::bold("X axis:\n"), opt$xaxis), "yellow")
 echo(paste0(crayon::bold("Y axis:\n"), opt$yaxis), "yellow")
-echo(paste0(crayon::bold("Sorted labels:\n"), opt$sort), "yellow")
+echo(paste0(crayon::bold("Order labels:\n"), opt$orderted), "yellow")
 echo(paste0(crayon::bold("Output base filename: "), opt$out), "yellow")
 echo(paste0(crayon::bold("Output directory for results:\n"), opt$path), "yellow")
 
@@ -240,7 +235,7 @@ if(!(is.character(metadata[, opt$yaxis]) | is.factor(metadata[, opt$yaxis])))
 #   Plot data                                                               ####
 
 md <- metadata[, c(opt$xaxis, opt$yaxis)]
-res <- createheatmap(md, order = opt$sort)
+res <- createheatmap(md, order = opt$order)
 
 #   ____________________________________________________________________________
 #   Export data                                                             ####

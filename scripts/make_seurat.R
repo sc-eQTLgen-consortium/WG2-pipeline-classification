@@ -142,7 +142,7 @@ echo("DONE....................................................................",
 echo("Saving query data.......................................................",
      "yellow")
 
-saveRDS(seurat, file.path(opt$path, paste0(opt$out, "_", opt$batch, ".RDS")))
+saveRDS(seurat, paste0(opt$path, opt$out, ".RDS"))
 
 echo("DONE....................................................................",
      "yellow")

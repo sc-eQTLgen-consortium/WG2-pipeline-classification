@@ -44,7 +44,7 @@ rule make_seurat:
         sif = config["inputs"]["singularity_image"],
         script = config["inputs"]["repo_dir"] + "scripts/make_seurat.R",
         batch = lambda wildcards: "--batch " + wildcards.pool if config["settings"]["split"] else "",
-        out = "query",
+        out = "query_{pool}",
         path = config["outputs"]["output_dir"] + "make_seurat/"
     log: config["outputs"]["output_dir"] + "log/make_seurat.{pool}.log"
     shell:
@@ -87,7 +87,7 @@ rule map_azimuth:
         batch = "" if config["settings"]["split"] else "--batch Pool",
         refdata = config["settings"]["refdata"],
         plan = config["map_extra"]["azimuth_plan"],
-        palette = "--palette '{}'".format(config["settings"]["palette"]) if config["settings"]["palette"] is not None else "",
+        palette = "--palette '{}'".format(config["settings_extra"]["palette"]) if config["settings_extra"]["palette"] is not None else "",
         out = "azimuth_{pool}",
         path = config["outputs"]["output_dir"] + "map/"
     log: config["outputs"]["output_dir"] + "log/map_azimuth.{pool}.log"
@@ -193,7 +193,7 @@ rule visualise_azimuth:
         sif = config["inputs"]["singularity_image"],
         script = config["inputs"]["repo_dir"] + "scripts/visualise.R",
         columns = config["settings"]["refdata"],
-        palette = "--palette '{}'".format(config["settings"]["palette"]) if config["settings"]["palette"] is not None else "",
+        palette = "--palette '{}'".format(config["settings_extra"]["palette"]) if config["settings_extra"]["palette"] is not None else "",
         out = "azimuth",
         path = config["outputs"]["output_dir"] + "visualise/"
     log: config["outputs"]["output_dir"] + "log/visualise.azimuth.log"
@@ -225,7 +225,7 @@ rule visualise_hierscpred:
         sif = config["inputs"]["singularity_image"],
         script = config["inputs"]["repo_dir"] + "scripts/visualise.R",
         columns = "scpred_prediction",
-        palette = "--palette '{}'".format(config["settings"]["palette"]) if config["settings"]["palette"] is not None else "",
+        palette = "--palette '{}'".format(config["settings_extra"]["palette"]) if config["settings_extra"]["palette"] is not None else "",
         out = "hier_scpred",
         path = config["outputs"]["output_dir"] + "visualise/"
     log: config["outputs"]["output_dir"] + "log/visualise.hier_scpred.log"
@@ -248,7 +248,8 @@ rule compare:
     output:
         counts_heatmap = report(config["outputs"]["output_dir"] + "compare/comp_heatmap_counts.pdf", category="Compare", caption=config["inputs"]["repo_dir"] + "report_captions/compare.rst"),
         prop_heatmap = report(config["outputs"]["output_dir"] + "compare/comp_heatmap_prop.pdf", category="Compare", caption=config["inputs"]["repo_dir"] + "report_captions/compare.rst"),
-        contingency_table = config["outputs"]["output_dir"] + "compare/comp_contingency_table.tsv.gz"
+        contingency_table = config["outputs"]["output_dir"] + "compare/comp_contingency_table.tsv.gz",
+        done = config["outputs"]["output_dir"] + "compare/compare.done"
     resources:
         mem_per_thread_gb = lambda wildcards, attempt: attempt * config["compare"]["compare_memory"],
         disk_per_thread_gb = lambda wildcards, attempt: attempt * config["compare"]["compare_memory"],
@@ -260,7 +261,7 @@ rule compare:
         script = config["inputs"]["repo_dir"] + "scripts/compare.R",
         xaxis = config["compare_extra"]["xaxis"],
         yaxis = config["compare_extra"]["yaxis"],
-        sort = config["compare_extra"]["sort"],
+        order = "--order " + config["compare_extra"]["order"] if config["compare_extra"]["order"] is not None else "",
         out = "comp",
         path = config["outputs"]["output_dir"] + "compare/"
     log: config["outputs"]["output_dir"] + "log/compare.log"
@@ -271,7 +272,7 @@ rule compare:
             --metadata2 {input.metadata2} \
             --xaxis {params.xaxis} \
             --yaxis {params.yaxis} \
-            --sort {params.sort} \
+            {params.order} \
             --out {params.out} \
             --path {params.path}
         singularity exec --bind {params.bind} {params.sif} touch {output.done}

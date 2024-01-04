@@ -2,7 +2,7 @@
 #   Script information                                                      ####
 
 # title: Cell type classification
-# author: Jose Alquicira Hernandez, Lieke Michelsen
+# author: Jose Alquicira Hernandez, Lieke Michelsen, Martijn Vochteloo
 # date: 2021-06-04
 # description: Classifies cells from scRNA-seq data following Azimuth classifi-
 # cation approach. 
@@ -300,7 +300,7 @@ metadata <- lapply(metadata, function(x) {
 })
 
 metadata <- do.call(rbind, metadata)
-metadata <- metadata[, c("barcode", metadata.columns)]
+metadata <- metadata[, c("Pool", "barcode", metadata.columns)]
 write_delim(metadata, file=gzfile(paste0(opt$path, opt$out, ".metadata.tsv.gz")), delim="\t")
 
 rownames(metadata) <- metadata$barcode
