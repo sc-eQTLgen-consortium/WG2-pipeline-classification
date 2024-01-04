@@ -22,7 +22,7 @@ settings:
   run_azimuth: True ### Whether to run azimuth cell annotation or not
   run_hierscpred: True ### Whether to run Hierarchical scPred cell annotation or not
 
-cluster_time: {0: "05:59:00", 1: "23:59:00", 2: "6-23:59:00"}
+cluster_time: {0: "05:59:00", 1: "23:59:00", 2: "6-23:59:00"} ### Options for dynamic time usage for cluster submissions of jobs
 
 ##############################################################################################################
 ##### The following arguments are common parameters that may need to be changed depending on the dataset #####
