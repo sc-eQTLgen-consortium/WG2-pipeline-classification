@@ -51,7 +51,7 @@ option_list <-  list(
               default = "comp",
               help = crayon::green("Output file name [default= %default]"),
               metavar = "character"),
-  make_option(c("--path"), 
+  make_option("--path",
               type = "character", 
               default = ".",
               help = crayon::green("Output path to store results [default= %default]"), 

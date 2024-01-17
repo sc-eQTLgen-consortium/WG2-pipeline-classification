@@ -226,17 +226,16 @@ if (!is.null(opt$batch)) {
 
 metadata <- lapply(batches, function(x) x[[]][, metadata.columns, drop = FALSE])
 metadata <- lapply(metadata, function(x) {
-  x$barcode <- row.names(x)
+  x$Barcode <- row.names(x)
   x
 })
 
 metadata <- do.call(rbind, metadata)
-metadata <- metadata[, c("Pool", "barcode", metadata.columns)]
+metadata <- metadata[, c("Barcode", metadata.columns)]
 write_delim(metadata, file=gzfile(paste0(opt$path, opt$out, ".metadata.tsv.gz")), delim="\t")
 
-
-rownames(metadata) <- metadata$barcode
-metadata$barcode <- NULL
+rownames(metadata) <- metadata$Barcode
+metadata$Barcode <- NULL
 data <- AddMetaData(data, metadata)
 
 echo("DONE....................................................................",

@@ -121,7 +121,12 @@ load_seurat_object <- function(row){
   # change to a barcode unique across lanes
   colnames(counts) <- meta.data$Barcode
 
+  # Create Seurat object.
   seurat <- CreateSeuratObject(counts, min.cells = 0, min.features = 0, meta.data = meta.data)
+
+  # remove zero counts.
+  seurat <- seurat[, colSums(seurat@assays$RNA@counts) > 0]
+
   print("  Done")
   return(seurat)
 }

@@ -71,7 +71,7 @@ for column, (must_be_unique, must_be_numeric, must_exist) in required_columns.it
     if must_exist:
         for fpath in POOL_DF[column]:
             if not os.path.exists(fpath) or not os.path.isfile(fpath):
-                logger.info("\tYour {} column contains a file {} that does niot exist, please make sure all input files exist.".format(column, os.path.basename(fpath)))
+                logger.info("\tYour {} column contains a file {} that does not exist, please make sure all input files exist.".format(column, os.path.basename(fpath)))
                 poolsheet_is_valid = False
                 break
 

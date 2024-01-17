@@ -64,7 +64,7 @@ option_list <- list(
               help = crayon::yellow("Maximum allowed total size (in GB) of global variables identified
                 [default= %default]"),
               metavar = "numeric"),
-  make_option(c("--palette"),
+  make_option("--palette",
               type = "character",
               default = NULL,
               help = crayon::green("The palette to use"),
@@ -290,16 +290,16 @@ if (!is.null(opt$batch)) {
 
 metadata <- lapply(batches, function(x) x[[]][, metadata.columns, drop = FALSE])
 metadata <- lapply(metadata, function(x) {
-  x$barcode <- row.names(x)
+  x$Barcode <- row.names(x)
   x
 })
 
 metadata <- do.call(rbind, metadata)
-metadata <- metadata[, c("Pool", "barcode", metadata.columns)]
+metadata <- metadata[, c("Barcode", metadata.columns)]
 write_delim(metadata, file=gzfile(paste0(opt$path, opt$out, ".metadata.tsv.gz")), delim="\t")
 
-rownames(metadata) <- metadata$barcode
-metadata$barcode <- NULL
+rownames(metadata) <- metadata$Barcode
+metadata$Barcode <- NULL
 data <- AddMetaData(data, metadata)
 
 echo("DONE....................................................................",
@@ -347,7 +347,12 @@ if(!is.null(opt$palette)){
 
 for (dim_reduction in c("pca", "umap")) {
   plot <- NULL
-  for (group_by in c("Pool", paste0("predicted.", names(refdata)))) {
+  group_by_cols <- paste0("predicted.", names(refdata))
+  if (!is.null(opt$batch)) {
+    group_by_cols <-c(opt$batch, group_by_cols)
+  }
+
+  for (group_by in group_by_cols) {
     cols <- palette
     for (value in unique(data[[group_by]])) {
       if (!value %in% names(palette)) {

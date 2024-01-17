@@ -27,12 +27,12 @@ option_list <-  list(
               default = NULL,
               help = crayon::green(""),
               metavar = "character"),
-  make_option(c("--out"),
+  make_option("--out",
               type = "character", 
               default = NULL,
               help = crayon::green("Output file name"),
               metavar = "character"),
-  make_option(c("--path"), 
+  make_option("--path",
               type = "character", 
               default = ".",
               help = crayon::green("Output path to store results [default= %default]"), 
@@ -101,7 +101,8 @@ pools <- read_delim(opt$poolsheet, delim = "\t")
 
 load_metadata <- function(row){
   message("Reading ", row[["Pool"]])
-  metadata <- read_delim(paste0(opt$indir, opt$out, ".metadata.tsv.gz"), delim="\t")
+  metadata <- read_delim(paste0(opt$indir, opt$out, "_", row[["Pool"]], ".metadata.tsv.gz"), delim="\t")
+  metadata <- cbind(Pool = row[["Pool"]], metadata)
   return(metadata)
 }
 metadata <- apply(pools, 1, load_metadata)

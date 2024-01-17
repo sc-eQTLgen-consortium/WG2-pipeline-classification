@@ -146,6 +146,7 @@ rule map_hierscpred:
         """
 
 
+# TODO: this might for for hierscpred due to wildcard constraints
 rule reduce:
     input:
         files = lambda wildcards: expand(config["outputs"]["output_dir"] + "map/{method}_{pool}.metadata.tsv.gz", method=wildcards.method, pool=POOLS),
@@ -171,7 +172,7 @@ rule reduce:
         singularity exec --bind {params.bind} {params.sif} Rscript {params.script} \
             --poolsheet {input.poolsheet} \
             --indir {params.indir} \
-            --method {wildcards.method} \
+            --out {wildcards.method} \
             --path {params.path}
         """
 
