@@ -349,7 +349,7 @@ for (dim_reduction in c("pca", "umap")) {
   plot <- NULL
   group_by_cols <- paste0("predicted.", names(refdata))
   if (!is.null(opt$batch)) {
-    group_by_cols <-c(opt$batch, group_by_cols)
+    group_by_cols <- c(opt$batch, group_by_cols)
   }
 
   for (group_by in group_by_cols) {
