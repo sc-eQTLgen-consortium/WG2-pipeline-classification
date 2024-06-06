@@ -10,15 +10,25 @@ if not config["refs"]["ref_dir"].endswith("/"):
 if not config["outputs"]["output_dir"].endswith("/"):
     config["outputs"]["output_dir"] += "/"
 
+# Function that quits the program.
+# This is seperated so I can ignore errors if I want to.
+if config["settings_extra"]["ignore_file_checks"]:
+    logger.warning("Ignoring errors, please note that this may cause rules to crash!\n")
+
+def stop(message):
+    if config["settings_extra"]["ignore_file_checks"]:
+        return
+    exit(message)
+
 # Check if the singularity image exists.
 if not os.path.exists(config["inputs"]["singularity_image"]):
     logger.info("Error, the singularity image does not exist.\n\nExiting.")
-    exit("MissingSIFFile")
+    stop("MissingSIFFile")
 
 # Check if the poolsheet exists.
 if not os.path.exists(config["inputs"]["poolsheet_path"]):
     logger.info("Error, the poolsheet file does not exist.\n\nExiting.")
-    exit("MissingPoolSheetFile")
+    stop("MissingPoolSheetFile")
 
 # Check if the references exists.
 for reference in ["azimuth", "hierscpred"]:
@@ -26,12 +36,12 @@ for reference in ["azimuth", "hierscpred"]:
     reference_file = config["refs_extra"][reference + "_reference"]
     if config["settings"]["run_" + reference] and (reference_file is None or not os.path.exists(config["refs"]["ref_dir"] + reference_file)):
         logger.info("Error, could not find the {} file. Please check that the file exists.\n\nExiting.".format(config["refs"]["ref_dir"] + reference_file))
-        exit("MissingReferenceFile")
+        stop("MissingReferenceFile")
 
 # Check if at least one method is used.
 if not config["settings"]["run_azimuth"] and not config["settings"]["run_hierscpred"]:
     logger.info("Error, expect at least one classification method to be selected.\n\nExiting.")
-    exit("NoClassificationMethod")
+    stop("NoClassificationMethod")
 
 logger.info("Loading the input poolsheet")
 POOL_DF = pd.read_csv(config["inputs"]["poolsheet_path"], sep="\t", dtype=str)
@@ -52,7 +62,7 @@ if config["inputs"]["query_rds"] is not None:
 missing_columns = [column for column in required_columns.keys() if not column in POOL_DF.columns]
 if len(missing_columns) > 0:
     logger.info("\tError, missing columns {} in poolsheet file for the selected methods.".format(", ".join(missing_columns)))
-    exit()
+    stop("InvalidPoolSheet")
 
 # Check if the columns are valid.
 poolsheet_is_valid = True
@@ -77,7 +87,7 @@ for column, (must_be_unique, must_be_numeric, must_exist) in required_columns.it
 
 if not poolsheet_is_valid:
     logger.info("\n\nExiting.")
-    exit("InvalidPoolSheet")
+    stop("InvalidPoolSheet")
 
 logger.info("\tValid.")
 POOLS = POOL_DF["Pool"]

@@ -32,7 +32,7 @@ preprocess:
   split_threads: 1 ### The number threads that will be used for the split step
   split_time: 0 ### The time setting to use
 
-  make_seurat_memory: 16 ### The amount of memory (GB) used per thread for the make seurat step
+  make_seurat_memory: 32 ### The amount of memory (GB) used per thread for the make seurat step
   make_seurat_threads: 1 ### The number threads that will be used for the make seurat step
   make_seurat_time: 0 ### The time setting to use
 
@@ -67,6 +67,11 @@ refs_extra:
   azimuth_reference: "pbmc_multimodal.h5seurat" ### used for azimuth classification
   hierscpred_reference: "hier_scpred.RDS" ### hierarchical trained model for scPred classification
 
+settings_extra:
+  ignore_file_checks: False ### Boolean to ignore missing file errors in the Snakefile.
+  memory_buffer: 1 ### Buffer to prevent memory overflow, available memory is reduced by this amount in GB
+  palette: null ### Custom color palette to use for visalisations
+
 map_extra:
   azimuth_plan: "sequential" ### Strategy to resolve future: sequential, multisession, multicore, cluster, remote, transparent
   hierscpred_thr: 0 ### Threshold for rejection. By default no rejection is implemented
@@ -77,7 +82,3 @@ compare_extra:
   xaxis: "predicted.celltype.l2" ### Column in metadata
   yaxis: "scpred_prediction" ### Column in metadata
   order: "CD4 Naive;CD4 TCM;CD4 TEM;CD4 CTL;Treg;CD4 Proliferating;CD8 Naive;CD8 TCM;CD8 TEM;CD8 Proliferating;gdT;MAIT;ILC;dnT;NK;NK_CD56bright;NK Proliferating;B naive;B intermediate;B memory;Plasmablast;CD14 Mono;CD16 Mono;cDC1;cDC2;pDC;ASDC;HSPC;Platelet;Eryth;Doublet" ### Order for the labels in both axes to match cell type hierarchy
-
-settings_extra:
-  memory_buffer: 1 ### Buffer to prevent memory overflow, available memory is reduced by this amount in GB
-  palette: null ### Custom color palette to use for visalisations
