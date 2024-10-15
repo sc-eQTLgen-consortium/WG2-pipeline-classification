@@ -3,11 +3,12 @@
 
 Part of the sceQTL-Gen consortium pipeline. Step 2, where the cell classification is done.
 
-Please see the [Wiki](https://powellgenomicslab.github.io/WG2-pipeline-classification-docs/) for information on running the Classification pipeline.
+Please see the [documentation](https://wg-pipeline-docs.readthedocs.io/en/latest/WG2-pipeline-classification/index.html) for information on running the pipeline.
 
-# Please report any errors to
+Please report any errors to
 
 -   Jose Alquicira Hernandez ([j.alquicira\@garvan.org.au](mailto:j.alquicira@garvan.org.au))
 -   Lieke Michielsen ([L.C.M.Michielsen\@tudelft.nl](mailto:L.C.M.Michielsen@tudelft.nl))
+-   Martijn Vochteloo ([m.vochteloo\@umcg.nl](mailto:m.vochteloo@umcg.nl))
 
 or open an issue.
