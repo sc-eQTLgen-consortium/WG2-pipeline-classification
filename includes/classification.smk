@@ -87,7 +87,7 @@ rule map_azimuth:
         batch = "" if config["settings"]["split"] else "--batch Pool",
         refdata = config["settings"]["refdata"],
         plan = config["map_extra"]["azimuth_plan"],
-        palette = "--palette '{}'".format(config["settings_extra"]["palette"]) if config["settings_extra"]["palette"] is not None else "",
+        palette = "--palette '{}'".format(config["settings"]["palette"]) if config["settings"]["palette"] is not None else "",
         out = "azimuth_{pool}",
         path = config["outputs"]["output_dir"] + "map/"
     log: config["outputs"]["output_dir"] + "log/map_azimuth.{pool}.log"
@@ -146,7 +146,6 @@ rule map_hierscpred:
         """
 
 
-# TODO: this might for for hierscpred due to wildcard constraints
 rule reduce:
     input:
         files = lambda wildcards: expand(config["outputs"]["output_dir"] + "map/{method}_{pool}.metadata.tsv.gz", method=wildcards.method, pool=POOLS),
@@ -194,7 +193,7 @@ rule visualise_azimuth:
         sif = config["inputs"]["singularity_image"],
         script = config["inputs"]["repo_dir"] + "scripts/visualise.R",
         columns = config["settings"]["refdata"],
-        palette = "--palette '{}'".format(config["settings_extra"]["palette"]) if config["settings_extra"]["palette"] is not None else "",
+        palette = "--palette '{}'".format(config["settings"]["palette"]) if config["settings"]["palette"] is not None else "",
         out = "azimuth",
         path = config["outputs"]["output_dir"] + "visualise/"
     log: config["outputs"]["output_dir"] + "log/visualise.azimuth.log"
@@ -226,7 +225,7 @@ rule visualise_hierscpred:
         sif = config["inputs"]["singularity_image"],
         script = config["inputs"]["repo_dir"] + "scripts/visualise.R",
         columns = "scpred_prediction",
-        palette = "--palette '{}'".format(config["settings_extra"]["palette"]) if config["settings_extra"]["palette"] is not None else "",
+        palette = "--palette '{}'".format(config["settings"]["palette"]) if config["settings"]["palette"] is not None else "",
         out = "hier_scpred",
         path = config["outputs"]["output_dir"] + "visualise/"
     log: config["outputs"]["output_dir"] + "log/visualise.hier_scpred.log"

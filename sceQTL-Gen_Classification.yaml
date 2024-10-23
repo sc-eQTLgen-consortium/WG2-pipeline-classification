@@ -18,9 +18,10 @@ outputs:
 settings:
   cite_seq: True ### Whether or not the reference contains CITE-seq data
   refdata: "celltype.l2=celltype.l2" ### The labels to transfer for Azimuth annotation
-  split: False ### Whether to split the data into separate RDS files and run each in parallel or not
+  split: True ### Whether to split the data into separate RDS files and run each in parallel or not
   run_azimuth: True ### Whether to run azimuth cell annotation or not
   run_hierscpred: True ### Whether to run Hierarchical scPred cell annotation or not
+  palette: null ### Custom color palette to use for visalisations
 
 cluster_time: {0: "05:59:00", 1: "23:59:00", 2: "6-23:59:00"} ### Options for dynamic time usage for cluster submissions of jobs
 
@@ -70,7 +71,6 @@ refs_extra:
 settings_extra:
   ignore_file_checks: False ### Boolean to ignore missing file errors in the Snakefile.
   memory_buffer: 1 ### Buffer to prevent memory overflow, available memory is reduced by this amount in GB
-  palette: null ### Custom color palette to use for visalisations
 
 map_extra:
   azimuth_plan: "sequential" ### Strategy to resolve future: sequential, multisession, multicore, cluster, remote, transparent
