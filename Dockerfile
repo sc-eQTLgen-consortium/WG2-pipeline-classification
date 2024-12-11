@@ -22,9 +22,6 @@ MAINTAINER Martijn Vochteloo <m.vochteloo@umcg.nl>
 
 ################## INSTALLATION ######################
 
-ADD . /tmp/repo
-WORKDIR /tmp/repo
-
 ENV PATH=/opt:/usr/games:$PATH
 ENV SHELL=/bin/bash
 ENV LC_ALL=C
